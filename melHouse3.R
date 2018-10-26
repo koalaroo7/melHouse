@@ -1,27 +1,69 @@
 
-
-
-melHouseStart <- read.csv("///Melbourne data project/melbourne-housing-market/Melbourne_housing_FULL.csv")
+mel <- read.csv("/Users/jonny/Desktop/Melbourne data project/melbourne-housing-market")
+melHouseStart <- read.csv("/Users/jonny/Desktop/Melbourne data project/melbourne-housing-market/Melbourne_housing_FULL.csv")
 
 
 library(tidyverse)
 
 #----------------
 
-# check the structure and summary 
+melHouseStart <- as.tibble(melHouseStart)
+
+# check the structure
 str(melHouseStart)
-summary(melHouseStart)
+
+#---------------
+
+# Fix data types
+# changing Distance to numeric, Propertycount to numeric, Date to date /d/m/y date format
 
 
+(melHouseStart$Distance <- as.numeric(as.character(melHouseStart$Distance)))
+
+(melHouseStart$Propertycount <- as.numeric(as.character(melHouseStart$Propertycount)))
+
+(melHouseStart$Date <- as.Date(melHouseStart$Date, "%d/%m/%Y"))
+
+#-------------
+
+# Adding month and year to the columns & correcting spelling on 
+
+melHouse <- melHouseStart %>%
+  mutate(Month = as.factor(strftime(Date, "%m")),
+         Year = as.factor(strftime(Date, "%y"))) %>%
+  rename("Lat" = "Lattitude", "Long" = "Longtitude", "Region" = "Regionname", "PropertyCount" = "Propertycount")
+
+glimpse(melHouse) # verifying that the columns were created and renamed
+
+#-------------
+
+# Finding the descriptive statistics
+
+summary(melHouse) # descriptive statistics with out standard deviation
+
+# getting standard deviation for each variable
+
+melHouseSD <- melHouse %>%
+  summarise_all(funs(sd(., na.rm=TRUE)))
+
+glimpse(melHouseSD) # getting a clean print out of the SD values
 
 #------------
 
-#rename latitude and longitude
+# checking NA values
 
-(melHouse <- melHouseStart %>% 
-   rename("Lat" = "Lattitude", "Long" = "Longtitude"))
+library(Amelia)
+missmap(melHouse) # visualise missing values
 
-#-----------------
+colSums(is.na(melHouse))
+
+#----------
+
+# Finding the percentage of NA values per variable
+
+colMeans(is.na(melHouse))*100
+
+#---------
 
 # inspecting rooms vs bedroom2 as Bedroom2 was scraped from a different source
 
@@ -41,39 +83,23 @@ melHouse %>%
 # checking the correlation
 cor.test(melHouse$Rooms, melHouse$Bedroom2)
 
-# Dropping Bedroom2 due to multicolinearity issues
-melHouse <- select(melHouse, -Bedroom2)
+# Drop Bedroom2 due to multicolinearity issues
 
-
-#------------
-
-# Logical test for complete rows
-
-(melHouseCompleteCases <- complete.cases(melHouseDropped))
-
-#---------------
-
-# checking NA values
-
-library(Amelia)
-missmap(melHouse) # visualise missing values
-
-colSums(is.na(melHouse))
-
-#----------
-
-# Finding the percentage of NA values per variable
-
-colMeans(is.na(melHouse))*100
-
-#---------
+#--------
 
 # Dropping columns that are not needed
 
 (melHouseDropped <- select(melHouse, - BuildingArea, - YearBuilt, - SellerG, - Lat, - Long, 
-                           - Method, - Suburb, -Postcode, -Address, - Propertycount, - CouncilArea))
+                           - Method, - Suburb, -Postcode, -Address, 
+                           - PropertyCount, - CouncilArea, - Bedroom2, - Date))
 
 #----------
+
+# checking complete cases
+
+melHouseCompleteCases <- complete.cases(melHouseDropped)
+table(melHouseCompleteCases)
+#---------
 
 # remove NA values
 
@@ -81,33 +107,6 @@ melHouseNaRemoved <- na.omit(melHouseDropped)
 str(melHouseNaRemoved)
 summary(melHouseNaRemoved)
 
-
-#---------------
-
-# change distance to a numeric
-
-(melHouseNaRemoved$Distance <- as.numeric(as.character(melHouseNaRemoved$Distance)))
-
-#---------------
-
-# convert date to month and year as well as add to tibble
-
-(melHouseNaRemoved$Date <- as.Date(melHouseNaRemoved$Date, "%d/%m/%Y"))
-
-melHouseMonthYear <- melHouseNaRemoved %>%
-  mutate(Month = as.factor(strftime(Date, "%m")),
-         Year = as.factor(strftime(Date, "%y")))
-
-# check classes to ensure code worked
-glimpse(melHouseMonthYear)
-
-
-# dropping the Date column
-
-melHouseMonthYear <- melHouseMonthYear %>%
-  select(-Date)
-
-glimpse(melHouseMonthYear)
 
 #--------------
 
