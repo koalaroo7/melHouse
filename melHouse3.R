@@ -74,7 +74,7 @@ melHouse %>%
   select(Rooms, Bedroom2) %>%
   filter(Rooms != Bedroom2)
 
-# getting a count of how many rows containt the same values
+# getting a count of how many rows contain the same values
 melHouse %>%
   select(Rooms, Bedroom2) %>%
   count(Rooms == Bedroom2)
@@ -86,7 +86,7 @@ cor.test(melHouse$Rooms, melHouse$Bedroom2)
 
 #--------
 
-# Dropping columns that are not needed
+# Dropping columns that are not needed due to many NA values
 
 (melHouseDropped <- select(melHouse, - BuildingArea, - YearBuilt, - SellerG, - Lat, - Long, 
                            - Method, - Suburb, -Postcode, -Address, 
@@ -109,20 +109,73 @@ summary(melHouseNaRemoved)
 
 #--------------
 
+#checking summary to look for unusual features
+summary(melHouseNaRemoved)
 
 
-# test for strength of varialbles
+# Eliminate any home where it is claimed it has more bathrooms than rooms
 
-(summary(lm(Price ~., data =melHouseNaRemoved)))
+(melClean <- melHouseNaRemoved %>%
+  filter(Bathroom < Rooms))
 
-#everything is strong - check factors
+melClean %>%
+  filter(Bathroom > Rooms) # confirming the above code worked
+
+# inspect bathrooms > 5
+melClean %>%
+  filter(Bathroom > 5)
+
+# Elinimate any home claiming to have 0 bathrooms or more and 5
+melClean1 <- melClean %>%
+  filter(Bathroom > 0 & Bathroom <= 5)
+  
+summary(melClean1) # verifying the code worked
+
+# Eliminate any home with 0 Landsize
+(melClean2 <- melClean1 %>%
+    filter(Landsize > 0))
+
+summary(melClean2) # inspecting corrections have been fixed and landsize issues
+
+# take a look at the lowest values of landsize
+melClean2 %>%
+  select(Landsize, Type) %>%
+  arrange(Landsize)
+
+# using this link https://www.smh.com.au/business/melbournes-apartment-sizes-face-more-scrutiny-20150414-1mkuj4.html
+# setting a lowest value of 40, this 10 square meters lower than 2002 requirements
+
+(melClean3 <- melClean2 %>%
+    filter(Landsize >= 40))
+
+summary(melClean3)
+
+# inspect largest property sizes
+
+melClean3 %>%
+  select(Landsize, Car, Price) %>%
+  arrange(desc(Landsize))
+
+# using 1500 as a max
+
+melClean3 %>%
+  select(Landsize, Price) %>%
+  filter(Landsize > 1500)
+
+# eliminating any lot under 1500
+
+melClean4 <- melClean3 %>%
+  filter(Landsize < 1500)
+
+summary(melClean4)
+
 
 
 #------------
 
 # remove categorical to get numeric only
 
-(melHouseCorr <- melHouseNaRemoved %>%
+(melHouseCorr <- melClean4 %>%
   select(- Type, - Month, - Year, - Region))
 
 library(corrplot)
@@ -131,23 +184,28 @@ corrplot(cor(melHouseCorr), method = 'number')
 
 #-----------
 
-# get statistics first and correlations before running this
-# so the columns are preshrunk and not needed to be repeated
-
-#separate into 4 groups, all, house, unit, townhouse (h/u/t)
+#separate into 4 groups, all, house, unit, townhouse (h/u/t) while dropping 'Type'
 
 
-(MelHouseUnit <- melHouseNaRemoved %>%
-   filter(Type == 'u'))
+(apartment <- melClean4 %>%
+   filter(Type == 'u') %>%
+   select(- Type))
 
-(melHouseTown <- melHouseNaRemoved %>%
-    filter(Type == 'h'))
+(house <- melClean4 %>%
+    filter(Type == 'h') %>%
+    select(- Type))
 
-(melHouseHouse <- melHouseNaRemoved %>%
-    filter(Type == 't'))
+(townhouse <- melClean4 %>%
+    filter(Type == 't') %>%
+    select( - Type))
 
 #---------------------------
 
+# check models adjustd R-squared prior to checking normalization of variables
+
+(summary(lm(Price ~., data = apartment))) # 0.5362
+(summary(lm(Price ~., data = townhouse))) # 0.5861
+(summary(lm(Price ~., data = house)))     # 0.6134
 
 
 
