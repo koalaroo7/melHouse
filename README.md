@@ -9,4 +9,4 @@ Original Cleaning is in the master branch.
 Separated version into houses/apartments/townhouses with graphs and normalization via log10 is in separate branches
 
 
-Most up to date - Master/branch houses 3/branch graphs - 31/10/18
+Most up to date (4 separate sections) - Master/branch houses 3/branch graphs/ branch HouseTestAndTrain - 31/10/18
