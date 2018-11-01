@@ -11,4 +11,4 @@ Separated version into houses/apartments/townhouses with graphs and normalizatio
 
 Most up to date (4 separate sections) - Master/branch houses 3/branch graphs/ branch HouseTestAndTrain - 31/10/18
 
-Added another section with Regression however, this time keeping building area, and year built. Due to NA values this causes a loss of additional rows, shrinking the dataset, but provides a stronger model - saved a branch - buildarea - 1/11/18
+Added another section with Regression however, this time keeping building area, and year built. Due to NA values this causes a loss of additional rows, shrinking the dataset, but provides a stronger model - saved as branch - buildArea - 1/11/18
